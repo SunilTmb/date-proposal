@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- viewport-fit=cover lets us paint under the iPhone notch; safe-area padding is handled in CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#FCEEF3">
+  <meta name="color-scheme" content="light">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Will you go on a date with me? 🌸</title>
+
+  <!-- WhatsApp / social link preview.
+       Replace og:image with the absolute URL of your own picture once deployed. -->
+  <meta property="og:title" content="Will you go on a date with me? 🌸">
+  <meta property="og:description" content="I made you something. Tap to open 💌">
+  <meta property="og:type" content="website">
+  <!-- <meta property="og:image" content="https://your-site.example/assets/preview.jpg"> -->
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌸%3C/text%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <noscript>
+    <style>.card[data-card="1"]{opacity:1;visibility:visible;transform:none}</style>
+  </noscript>
+</head>
+<body>
+
+  <!-- Ambient background: slow drifting colour blobs, floating hearts, confetti canvas -->
+  <div class="bg" aria-hidden="true">
+    <span class="bg__blob bg__blob--a"></span>
+    <span class="bg__blob bg__blob--b"></span>
+    <span class="bg__blob bg__blob--c"></span>
+  </div>
+  <div class="hearts" id="hearts" aria-hidden="true"></div>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+  <!-- Only ONE card is visible at a time. script.js toggles .is-active -->
+  <main class="stage" id="stage">
+
+    <!-- ============ CARD 1 — PROPOSAL ============ -->
+    <section class="card card--chase" data-card="1" aria-labelledby="t1">
+      <!-- Swap assets/avatar.svg for your own photo (square works best) -->
+      <div class="avatar">
+        <img src="assets/avatar.svg" alt="" width="170" height="170" decoding="async">
+      </div>
+
+      <h1 class="title" id="t1" tabindex="-1" data-avoid>🌸 Will you go on a date with me? 🌸</h1>
+
+      <div class="arena">
+        <button type="button" class="btn btn--primary" data-goto="2" data-avoid>
+          <span class="btn__label">YES ♥</span>
+        </button>
+        <button type="button" class="btn btn--no" data-no aria-label="No (this button runs away)">
+          <span class="btn__label">NO</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ CARD 2 — SURPRISE ============ -->
+    <section class="card card--surprise" data-card="2" aria-labelledby="t2">
+      <div class="emoji-hero" aria-hidden="true">🥳</div>
+      <h2 class="title title--shout" id="t2" tabindex="-1">WAIT YOU ACTUALLY<br>SAID YES?? 😭</h2>
+      <p class="subtitle">I was so ready for you to say no 😅</p>
+      <button type="button" class="btn btn--primary btn--wide" data-goto="3">
+        <span class="btn__label">okay okay! →</span>
+      </button>
+    </section>
+
+    <!-- ============ CARD 3 — KISS ============ -->
+    <section class="card card--chase" data-card="3" aria-labelledby="t3">
+      <h2 class="title" id="t3" tabindex="-1" data-avoid>💋 I'll kiss you on our date...</h2>
+      <p class="subtitle subtitle--big" data-avoid>Are you ready? 🙈</p>
+
+      <div class="arena">
+        <button type="button" class="btn btn--primary" data-goto="4" data-avoid>
+          <span class="btn__label">YES ❤️</span>
+        </button>
+        <button type="button" class="btn btn--no" data-no aria-label="No (this button runs away)">
+          <span class="btn__label">NO 😏</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ CARD 4 — FOOD ============ -->
+    <section class="card" data-card="4" aria-labelledby="t4">
+      <h2 class="title" id="t4" tabindex="-1">Okay, what are we eating? 😋</h2>
+
+      <div class="options" role="radiogroup" aria-labelledby="t4" data-group="food">
+        <button type="button" class="option" role="radio" aria-checked="false" data-emoji="🍕" data-value="Veg Pizza" style="--tint:#FFD3E1">
+          <span class="option__disc" aria-hidden="true">🍕</span><span class="option__name">Veg Pizza</span>
+        </button>
+        <button type="button" class="option" role="radio" aria-checked="false" data-emoji="🍝" data-value="Pasta" style="--tint:#E7D6F7">
+          <span class="option__disc" aria-hidden="true">🍝</span><span class="option__name">Pasta</span>
+        </button>
+        <button type="button" class="option" role="radio" aria-checked="false" data-emoji="🥪" data-value="Grilled Sandwich" style="--tint:#FFE2CF">
+          <span class="option__disc" aria-hidden="true">🥪</span><span class="option__name">Grilled Sandwich</span>
+        </button>
+        <button type="button" class="option" role="radio" aria-checked="false" data-emoji="🌯" data-value="Veg Wrap" style="--tint:#D8F1E4">
+          <span class="option__disc" aria-hidden="true">🌯</span><span class="option__name">Veg Wrap</span>
+        </button>
+        <button type="button" class="option" role="radio" aria-checked="false" data-emoji="🍜" data-value="Veg Noodles" style="--tint:#FFF0C4">
+          <span class="option__disc" aria-hidden="true">🍜</span><span class="option__name">Veg Noodles</span>
+        </button>
+        <button type="button" class="option" role="radio" aria-checked="false" data-emoji="🥟" data-value="Momos" style="--tint:#D8E8FA">
+          <span class="option__disc" aria-hidden="true">🥟</span><span class="option__name">Momos</span>
+        </button>
+      </div>
+
+      <div class="reveal" data-reveal>
+        <button type="button" class="btn btn--primary btn--wide" data-goto="5">
+          <span class="btn__label">Continue →</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ CARD 5 — ACTIVITY ============ -->
+    <section class="card" data-card="5" aria-labelledby="t5">
+      <h2 class="title" id="t5" tabindex="-1">What should we do? ❤️</h2>
+
+      <div class="options" role="radiogroup" aria-labelledby="t5" data-group="activity">
+        <button type="button" class="option" role="radio" aria-checked="false" data-emoji="🎬" data-value="Movie" style="--tint:#E7D6F7">
+          <span class="option__disc" aria-hidden="true">🎬</span><span class="option__name">Movie</span>
+        </button>
+        <button type="button" class="option" role="radio" aria-checked="false" data-emoji="☕" data-value="Coffee" style="--tint:#FFE2CF">
+          <span class="option__disc" aria-hidden="true">☕</span><span class="option__name">Coffee</span>
+        </button>
+        <button type="button" class="option" role="radio" aria-checked="false" data-emoji="🌆" data-value="Long Drive" style="--tint:#FFD3E1">
+          <span class="option__disc" aria-hidden="true">🌆</span><span class="option__name">Long Drive</span>
+        </button>
+      </div>
+
+      <div class="reveal" data-reveal>
+        <button type="button" class="btn btn--primary btn--wide" data-goto="6">
+          <span class="btn__label">Next →</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ CARD 6 — AND AFTER THAT ============ -->
+    <section class="card" data-card="6" aria-labelledby="t6">
+      <div class="head">
+        <h2 class="title" id="t6" tabindex="-1">And after that...? 😏</h2>
+        <p class="subtitle">Choose wisely 👀</p>
+      </div>
+
+      <div class="options options--list" role="radiogroup" aria-labelledby="t6" data-group="after">
+        <button type="button" class="option option--pill" role="radio" aria-checked="false" data-emoji="😈" data-value="Lots of naughty things">
+          <span class="option__disc" aria-hidden="true">😈</span><span class="option__name">Lots of naughty things</span>
+        </button>
+        <button type="button" class="option option--pill" role="radio" aria-checked="false" data-emoji="🤗💋" data-value="Lots of kisses &amp; hugs">
+          <span class="option__disc" aria-hidden="true">🤗💋</span><span class="option__name">Lots of kisses &amp; hugs</span>
+        </button>
+      </div>
+
+      <div class="reveal" data-reveal>
+        <button type="button" class="btn btn--primary btn--wide" data-goto="7">
+          <span class="btn__label">Next →</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ CARD 7 — DATE DETAILS ============ -->
+    <section class="card" data-card="7" aria-labelledby="t7">
+      <h2 class="title" id="t7" tabindex="-1">When should we go? 📅</h2>
+
+      <div class="fields">
+        <div class="field">
+          <label class="field__label" for="dateInput">📅 Pick a day</label>
+          <input class="field__input" type="date" id="dateInput" data-input="date" required>
+        </div>
+        <div class="field">
+          <label class="field__label" for="timeInput">🕒 Pick a time</label>
+          <input class="field__input" type="time" id="timeInput" data-input="time" required>
+        </div>
+      </div>
+
+      <p class="hint" role="status" aria-live="polite" data-hint></p>
+
+      <button type="button" class="btn btn--primary btn--wide" data-submit-date>
+        <span class="btn__label">Almost there →</span>
+      </button>
+    </section>
+
+    <!-- ============ CARD 8 — FINAL ============ -->
+    <section class="card card--final" data-card="8" aria-labelledby="t8">
+      <svg class="heart-hero" viewBox="0 0 32 29.6" aria-hidden="true">
+        <defs>
+          <linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FF93B4"/>
+            <stop offset="1" stop-color="#DE437A"/>
+          </linearGradient>
+        </defs>
+        <path fill="url(#heartGrad)" d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z"/>
+      </svg>
+
+      <h2 class="title title--final" id="t8" tabindex="-1">IT'S A DATE! ❤️</h2>
+
+      <ul class="summary">
+        <li><span class="summary__label">Date:</span> <span class="summary__value" data-out="date">—</span></li>
+        <li><span class="summary__label">Time:</span> <span class="summary__value" data-out="time">—</span></li>
+        <li><span class="summary__label">Food:</span> <span class="summary__value" data-out="food">—</span></li>
+        <li><span class="summary__label">Plan:</span> <span class="summary__value" data-out="activity">—</span></li>
+        <li><span class="summary__label">After:</span> <span class="summary__value" data-out="after">—</span></li>
+      </ul>
+
+      <p class="equation">You + Me + a date = ❤️</p>
+      <p class="subtitle subtitle--big">I can't wait 🥰</p>
+
+      <!-- Answers delivery. Configure in script.js -> RESPONSE -->
+      <div class="send">
+        <p class="send__status" role="status" aria-live="polite" data-send-status></p>
+        <a class="btn btn--primary btn--wide" data-whatsapp hidden target="_blank" rel="noopener">
+          <span class="btn__label">Send my answers 💌</span>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,658 @@
+/* ==========================================================================
+   Date proposal — style.css
+   Mobile-first. Everything is sized with clamp()/dvh so it fits 320–414px
+   wide phones without scrolling the "chase" cards.
+   ========================================================================== */
+
+/* ---------- 1. Design tokens ---------- */
+:root {
+  /* Palette */
+  --bg-1: #FCEEF3;
+  --bg-2: #FDE8EF;
+  --bg-3: #FFF7FA;
+  --pink: #E85D88;
+  --pink-btn-a: #E4527F;      /* button gradient (darkened a touch for white-text contrast) */
+  --pink-btn-b: #CF3B6F;
+  --pink-text: #C93668;
+  --purple: #B58AD9;
+  --purple-soft: #EFE4F8;
+  --purple-deep: #6B3FA0;
+  --ink: #4A3040;
+  --ink-soft: #7B5F70;
+  --white: #FFFFFF;
+
+  /* Shape + space */
+  --radius-card: 30px;
+  --radius-md: 20px;
+  --radius-pill: 999px;
+  --gap: clamp(14px, 3.2dvh, 22px);
+
+  /* Shadows are tinted pink, never neutral grey */
+  --shadow-card: 0 24px 60px -24px rgba(232, 93, 136, .45), 0 6px 18px -8px rgba(107, 63, 160, .14);
+  --shadow-btn: 0 12px 24px -10px rgba(207, 59, 111, .7);
+
+  /* Motion */
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --card-ms: 600ms;
+
+  /* Type */
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ---------- 2. Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg-3);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(181, 138, 217, .75);
+  outline-offset: 3px;
+}
+
+h1, h2, p { margin: 0; }
+[hidden] { display: none !important; }
+
+/* Titles receive programmatic focus after a transition; no ring needed */
+.title:focus { outline: none; }
+
+/* ---------- 3. Background layers ---------- */
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: linear-gradient(165deg, var(--bg-3) 0%, var(--bg-2) 55%, var(--bg-1) 100%);
+}
+
+.bg__blob {
+  position: absolute;
+  width: 90vmax;
+  height: 90vmax;
+  border-radius: 50%;
+  will-change: transform;
+  animation: drift 26s ease-in-out infinite alternate;
+}
+.bg__blob--a { top: -35vmax; left: -30vmax; background: radial-gradient(circle, rgba(232, 93, 136, .20), transparent 62%); }
+.bg__blob--b { bottom: -40vmax; right: -35vmax; background: radial-gradient(circle, rgba(181, 138, 217, .24), transparent 62%); animation-duration: 32s; animation-delay: -8s; }
+.bg__blob--c { top: 25%; left: 15%; width: 60vmax; height: 60vmax; background: radial-gradient(circle, rgba(255, 196, 214, .30), transparent 62%); animation-duration: 38s; animation-delay: -14s; }
+
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(8vmax, 6vmax, 0) scale(1.12); }
+}
+
+.hearts {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.float-heart {
+  position: absolute;
+  bottom: -12vh;
+  left: var(--x);
+  font-size: var(--size);
+  line-height: 1;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: float-up var(--dur) linear forwards;
+}
+
+@keyframes float-up {
+  0%   { transform: translate3d(0, 0, 0) rotate(-8deg); opacity: 0; }
+  12%  { opacity: var(--op, .5); }
+  50%  { transform: translate3d(var(--drift), -62vh, 0) rotate(8deg); }
+  100% { transform: translate3d(calc(var(--drift) * -.6), -128vh, 0) rotate(-6deg); opacity: 0; }
+}
+
+#confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ---------- 4. Stage + cards ---------- */
+.stage {
+  position: relative;
+  z-index: 3;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  /* Respect the notch + home indicator */
+  padding:
+    calc(16px + env(safe-area-inset-top, 0px))
+    calc(16px + env(safe-area-inset-right, 0px))
+    calc(16px + env(safe-area-inset-bottom, 0px))
+    calc(16px + env(safe-area-inset-left, 0px));
+}
+
+/* All cards share ONE grid cell, so they stack on top of each other */
+.card {
+  grid-area: 1 / 1;
+  position: relative;               /* positioning context for the escaping NO button */
+  width: min(92vw, 400px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap);
+  padding: clamp(22px, 6vw, 32px) clamp(18px, 5.5vw, 28px);
+  text-align: center;
+  background: rgba(255, 255, 255, .82);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-radius: var(--radius-card);
+  /* inset ring instead of a border: keeps absolute-position maths exact */
+  box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(255, 255, 255, .9);
+
+  /* resting (not yet shown) state: slightly below, slightly small */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate3d(0, 18px, 0) scale(.96);
+  transition:
+    opacity var(--card-ms) var(--ease),
+    transform var(--card-ms) var(--ease),
+    visibility 0s linear var(--card-ms);
+}
+
+.card.is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition-delay: 0s, 0s, 0s;
+}
+
+/* exit: fade + slide left + a touch smaller */
+.card.is-leaving {
+  opacity: 0;
+  transform: translate3d(-28px, 0, 0) scale(.97);
+}
+
+/* Chase cards must not scroll/pan while a finger is moving:
+   otherwise the browser cancels pointer events and the NO button
+   would stop reacting to the finger. */
+.card--chase { touch-action: none; }
+
+/* ---------- 5. Typography ---------- */
+.title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.55rem, 6.8vw, 2.05rem);
+  line-height: 1.22;
+  letter-spacing: -.005em;
+  text-wrap: balance;
+  color: var(--ink);
+}
+
+.title--shout {
+  font-weight: 800;
+  font-size: clamp(1.45rem, 6.4vw, 1.9rem);
+}
+
+.subtitle {
+  font-size: 1.0625rem;
+  color: var(--ink-soft);
+  text-wrap: balance;
+}
+.subtitle--big {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 5.2vw, 1.45rem);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ---------- 6. Avatar + emoji hero ---------- */
+.avatar {
+  width: min(38vw, 22dvh, 160px);
+  aspect-ratio: 1;
+  border-radius: 34%;
+  overflow: hidden;
+  background: var(--bg-2);
+  box-shadow: 0 0 0 5px #fff, 0 16px 30px -14px rgba(232, 93, 136, .6);
+  animation: bob 4.5s ease-in-out infinite;
+}
+.avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+  50%      { transform: translateY(-5px) rotate(1.5deg); }
+}
+
+.emoji-hero {
+  width: clamp(84px, 24vw, 104px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  font-size: clamp(2.8rem, 12vw, 3.6rem);
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #fff, #FFD3E1);
+  box-shadow: 0 0 0 5px #fff, 0 16px 30px -14px rgba(232, 93, 136, .6);
+}
+.card--surprise.is-active .emoji-hero { animation: hop 1.1s var(--ease) .15s both; }
+
+@keyframes hop {
+  0%   { transform: scale(.4) rotate(-14deg); }
+  55%  { transform: scale(1.14) rotate(8deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.card--surprise {
+  background: linear-gradient(180deg, rgba(255, 224, 235, .92), rgba(255, 247, 250, .86));
+}
+
+/* ---------- 7. Buttons ---------- */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  min-width: 112px;
+  padding: 0 clamp(22px, 6vw, 30px);
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  transition: transform .28s var(--ease), box-shadow .28s var(--ease), filter .28s var(--ease);
+}
+.btn:active { transform: scale(.95); }
+
+.btn--primary {
+  color: #fff;
+  background: linear-gradient(135deg, var(--pink-btn-a), var(--pink-btn-b));
+  box-shadow: var(--shadow-btn), inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+@media (hover: hover) {
+  .btn--primary:hover { transform: translateY(-2px) scale(1.04); filter: saturate(1.1); }
+  .btn--primary:active { transform: scale(.96); }
+}
+
+/* gentle ring pulse so YES always catches the eye (not noisy: slow + faint) */
+.btn--primary[data-avoid]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: ring 2.8s ease-out infinite;
+}
+@keyframes ring {
+  0%   { box-shadow: 0 0 0 0 rgba(232, 93, 136, .42); }
+  70%  { box-shadow: 0 0 0 14px rgba(232, 93, 136, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 93, 136, 0); }
+}
+
+.btn--wide { width: 100%; }
+
+/* NO: lilac pill with a purple ring so it reads as "the other option" */
+.btn--no {
+  color: var(--purple-deep);
+  background: var(--purple-soft);
+  box-shadow: inset 0 0 0 2px var(--purple), 0 10px 20px -12px rgba(107, 63, 160, .6);
+}
+
+/* Once the NO button has fled for the first time it is lifted out of the
+   layout (a same-size .btn-slot placeholder keeps the row intact) and moved
+   around purely with transform: translate3d(). JS sets that transform. */
+.btn--no.is-free {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  z-index: 4;
+  touch-action: none;
+  will-change: transform;
+  transition: transform .42s var(--ease);
+}
+.btn--no.is-free:active { transform: inherit; }
+
+.btn-slot { display: inline-block; flex: none; }
+
+/* little squash-and-tilt whenever NO dashes away */
+.btn__label { display: inline-block; }
+.btn__label.is-dashing { animation: dash .5s var(--ease); }
+@keyframes dash {
+  0%   { transform: scale(1) rotate(0); }
+  30%  { transform: scale(.8, 1.15) rotate(-10deg); }
+  62%  { transform: scale(1.1, .92) rotate(7deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* taunt bubble ("hehe 😏") */
+.taunt {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  padding: 6px 13px;
+  border-radius: 14px;
+  font-size: .875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--purple-deep);
+  background: #fff;
+  box-shadow: 0 10px 20px -10px rgba(107, 63, 160, .55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.taunt.is-visible { opacity: 1; }
+
+/* The play area under the heading. Tall enough that NO has room to run. */
+.arena {
+  width: 100%;
+  min-height: clamp(170px, 30dvh, 240px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+/* ---------- 8. Option discs (food + activity) ---------- */
+.options {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 10px;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+}
+
+.option__disc {
+  position: relative;
+  width: 100%;
+  max-width: 92px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: clamp(1.9rem, 9vw, 2.4rem);
+  background: radial-gradient(circle at 30% 25%, #fff 0%, var(--tint) 85%);
+  box-shadow: 0 10px 18px -10px rgba(107, 63, 160, .45), inset 0 0 0 2px rgba(255, 255, 255, .9);
+  transition: transform .35s var(--ease), box-shadow .35s var(--ease);
+}
+
+/* check badge */
+.option__disc::after {
+  content: '♥';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: .8rem;
+  line-height: 1;
+  color: #fff;
+  background: var(--pink-btn-b);
+  box-shadow: 0 0 0 2px #fff;
+  transform: scale(0);
+  transition: transform .35s var(--ease);
+}
+
+.option__name {
+  font-size: .8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--ink);
+  transition: color .25s ease;
+}
+
+.option:active .option__disc { transform: scale(.94); }
+
+.option[aria-checked="true"] .option__disc {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 3px var(--pink), 0 16px 26px -12px rgba(232, 93, 136, .75);
+}
+.option[aria-checked="true"] .option__disc::after { transform: scale(1); }
+.option[aria-checked="true"] .option__name { color: var(--pink-text); font-weight: 600; }
+.option__disc.is-popping { animation: pop .45s var(--ease); }
+
+@keyframes pop {
+  0%   { transform: scale(.92); }
+  55%  { transform: scale(1.2); }
+  100% { transform: scale(1.1); }
+}
+
+/* Continue button: space is reserved, so nothing jumps when it appears */
+.reveal {
+  width: 100%;
+  min-height: 56px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity .35s ease, transform .45s var(--ease), visibility 0s linear .35s;
+}
+.reveal.is-shown {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+
+/* ---------- 9. Date + time fields ---------- */
+.fields { width: 100%; display: grid; gap: 16px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.field__label { font-size: .9375rem; font-weight: 600; color: var(--ink); padding-left: 4px; }
+
+.field__input {
+  display: block;
+  width: 100%;
+  min-width: 0;                 /* iOS date inputs overflow without this */
+  min-height: 58px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 1.0625rem;         /* >=16px so iOS doesn't zoom on focus */
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid #F6CADA;
+  border-radius: var(--radius-md);
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  transition: border-color .25s ease, box-shadow .25s ease;
+}
+.field__input:focus {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 4px rgba(232, 93, 136, .18);
+}
+.field__input::-webkit-date-and-time-value { text-align: left; min-height: 1.5em; }
+.field__input::-webkit-calendar-picker-indicator { opacity: .7; cursor: pointer; }
+.field__input[aria-invalid="true"] { border-color: var(--pink-btn-b); animation: shake .4s ease; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.hint { min-height: 1.4em; font-size: .9375rem; color: var(--pink-text); }
+
+/* ---------- 10. Final card ---------- */
+.card--final { gap: clamp(10px, 2.4dvh, 18px); }
+
+.heart-hero {
+  width: clamp(72px, 24vw, 104px);
+  height: auto;
+  filter: drop-shadow(0 12px 14px rgba(222, 67, 122, .35));
+  transform-origin: 50% 60%;
+}
+.card--final.is-active .heart-hero { animation: heartbeat 1.5s ease-in-out .5s infinite; }
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14%      { transform: scale(1.16); }
+  28%      { transform: scale(1); }
+  42%      { transform: scale(1.1); }
+  70%      { transform: scale(1); }
+}
+
+.title--final {
+  font-weight: 800;
+  font-size: clamp(2rem, 9vw, 2.6rem);
+  color: var(--pink-text);
+}
+
+.summary {
+  list-style: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.summary li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 18px;
+  background: #FFF1F6;
+  text-align: right;
+}
+.summary__label { font-size: .9375rem; color: var(--ink-soft); text-align: left; flex: none; }
+.summary__value { font-size: 1rem; font-weight: 600; color: var(--ink); }
+
+/* the one orchestrated reveal of the whole site: summary rows rise in turn */
+.card--final.is-active .summary li { animation: rise .6s var(--ease) both; }
+.card--final.is-active .summary li:nth-child(1) { animation-delay: .35s; }
+.card--final.is-active .summary li:nth-child(2) { animation-delay: .45s; }
+.card--final.is-active .summary li:nth-child(3) { animation-delay: .55s; }
+.card--final.is-active .summary li:nth-child(4) { animation-delay: .65s; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.equation {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: clamp(1.15rem, 5.2vw, 1.4rem);
+  color: var(--ink);
+}
+
+/* ---------- 11. Small / short screens ---------- */
+@media (max-width: 340px) {
+  .arena { gap: 10px; }
+  .btn { min-width: 100px; padding: 0 20px; }
+}
+
+@media (max-height: 640px) {
+  .stage { padding-top: calc(10px + env(safe-area-inset-top, 0px)); padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .card { padding-top: 18px; padding-bottom: 18px; }
+  .options { gap: 10px 8px; }
+  .option__disc { max-width: 78px; }
+  .summary li { padding: 8px 14px; }
+}
+
+/* ---------- 12. Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .bg__blob, .float-heart { animation: none !important; }
+  .float-heart { display: none; }
+}
+
+
+/* ---------- 13. "And after that" pill options ---------- */
+.head { display: grid; gap: 8px; }
+
+.options--list { grid-template-columns: 1fr; gap: 12px; }
+
+.option--pill {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  min-height: 66px;
+  padding: 12px 20px;
+  border-radius: var(--radius-pill);
+  background: #fff;
+  text-align: left;
+  box-shadow: inset 0 0 0 2px #F6CADA;
+  transition: transform .35s var(--ease), box-shadow .35s var(--ease), background .25s ease;
+}
+.option--pill .option__disc {
+  flex: none;
+  width: auto;
+  max-width: none;
+  aspect-ratio: auto;
+  display: block;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 1.7rem;
+  line-height: 1;
+}
+.option--pill .option__disc::after { display: none; }
+.option--pill .option__name { font-size: 1.0625rem; font-weight: 600; color: var(--ink); }
+.option--pill:active { transform: scale(.98); }
+.option--pill:active .option__disc { transform: none; }
+
+.option--pill[aria-checked="true"] {
+  background: #FFF1F6;
+  transform: scale(1.02);
+  box-shadow: inset 0 0 0 2px var(--pink), 0 14px 24px -14px rgba(232, 93, 136, .85);
+}
+.option--pill[aria-checked="true"] .option__disc { transform: none; box-shadow: none; }
+
+/* ---------- 14. Answer delivery (final card) ---------- */
+.send { width: 100%; display: grid; gap: 8px; }
+.send__status { min-height: 1.3em; font-size: .9rem; color: var(--ink-soft); }
+a.btn { text-decoration: none; }
